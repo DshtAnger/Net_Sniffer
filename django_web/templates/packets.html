@@ -1,0 +1,422 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Test Page</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/semantic.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
+
+    <script type="text/javascript" src="http://cdn.hcharts.cn/jquery/jquery-1.8.3.min.js"></script>    
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/semantic.js' %}"></script>
+    <script src="{% static 'js/exporting.js' %}"></script>
+    <script src="{% static 'js/highcharts.js' %}"></script>
+    <script src="{% static 'js/highcharts-3d.js' %}"></script>
+    <script src="{% static 'js/highcharts-more.js' %}"></script>
+    
+    <script src="{% static 'js/fixtableheader.js' %}"></script>
+    <!--
+    <script src="{% static 'js/analyze.js' %}"></script>
+    -->
+
+
+</head>
+
+<body id="home">
+    
+    <div class="fluid black ui buttons">
+      <div class="ui button" style='padding:1.2rem'>
+          <i class="home icon"></i>
+          <b>Packets Online Alalyzer</b>
+      </div>
+    </div>
+    
+    <br>
+    <div id = 'wrapper' >    
+        <div class="ui small form">
+            <div class="ui segment">
+                <div class="3 fluid ui buttons">
+                    <div class="positive ui button" id="start_capture">开始抓包</div>
+                    <div class="ui button" id="flush_page">刷新页面</div>
+                    <div class="negative ui button" id="stop_capture">停止抓包</div>
+                </div>
+                <div class="ui stacked segment">
+                    <div class="ui two column fitted stackable grid">
+                        <div class="ui ten wide column">
+                            <!--
+                            <div class="ui black segment" >
+                                Put traffic statistical graph
+                            </div>
+                            -->
+                            <div class="ui container segment">
+                              <div class="ui container" id="column_chart"></div>
+                            </div>
+                        </div>
+                        <div class="ui six wide column">                        
+                            <!--
+                            <div class="ui black segment">
+                                Put packets Size analyze
+                            </div>
+                            -->
+                            <div class="ui container segment">
+                              <div class="ui container" id="pie_chart"></div>
+                            </div>
+                        </div>
+                    </div>                    
+
+                    <div class="ui black pointing fluid five item menu" margin="auto">
+                        <a class="active item" data-tab="first">Packets Display</a>
+                        <a class="item" data-tab="second">Packets Statistics</a>
+                        <a class="item" data-tab="third">Web Request Analyze</a>
+                        <a class="item" data-tab="fourth">DNS Request List</a>
+                        <a class="item" data-tab="fifth">Mail Packets List</a>
+                    </div>
+
+
+
+                
+                    <div class="ui bottom attached active tab segment" data-tab="first">
+                      <div class="ui stacked segment">
+                        <!--first-->            
+                          <div class="ui search">        
+                            <div class="ui fluid icon input">
+                              <input class="prompt" type="text" id="filter" placeholder="Packets Filter">
+                              <i class="search icon"></i>                      
+                            </div>
+                            <div class="results"></div>
+                          </div>
+                          <br/>
+
+                          <div>
+                          <!--
+                          style="position:absolute; height:31rem; overflow:auto"
+                          -->
+                              <table class="ui black small table" id="pcaptable" cellpadding="0" cellspacing="0">
+                                  <thead>
+                                  <tr>
+                                  <th width="5%">Time</th>
+                                  <th width="5%">Ether_src</th>
+                                  <th width="5%">Ether_dst</th>
+                                  <th width="8%">Ip_src</th>                                  
+                                  <th width="8%">Ip_dst</th>
+                                  <th width="3%">Port_src</th>
+                                  <th width="3%">Port_dst</th>                                  
+                                  <th width="3%">Protocol</th>
+                                  <th width="3%">Length</th>
+                                  <!--<th width="3%">Info</th>-->
+                                  </tr>
+                                  </thead>
+                                  <tbody style="cursor:pointer;" class="pktdetail">
+                                  {% for packet in packets %}
+                                    {% if packet.protocol == 'HTTP' %}<tr class="positive">
+                                    {% elif packet.protocol == 'TCP' %}<tr class="warning">
+                                    {% elif packet.protocol == 'UDP' %}<tr class="negative">
+                                    {% else %}<tr>
+                                    {% endif %}               
+                                    <td>{{ packet.recv_time }}</td>                                    
+                                    <td>{{ packet.ether_src}}</td>
+                                    <td>{{ packet.ether_dst}}</td>                                    
+                                    <td>{{ packet.ip_src}}</td>
+                                    <td>{{ packet.ip_dst}}</td>                                    
+                                    <td>{{ packet.port_src}}</td>
+                                    <td>{{ packet.port_dst}}</td>
+                                    <td>{{ packet.fourthlayer_type}}</td>
+                                    <td>{{ packet.length}}</td>
+                                    <!--<td style="max-width: 200px;white-space:nowrap; overflow: hidden;">{{ packet.info }}</td>-->
+                                    </tr>
+                                  {% endfor %}
+                                  </tbody>
+                            </table>
+                          </div>
+                          <div class="ui small pagination menu">
+                              {% if packets.has_previous %}
+                              <a class="icon item" href="?page={{ packets.previous_page_number }}">
+                                  <i class="left arrow icon"></i>
+                              </a>
+                              {% endif %}
+
+                              <div class="disabled item"> {{ packets.number }} of {{ packets.paginator.num_pages }} </div>
+
+                              {% if packets.has_next %}
+                              <a class="icon item" href="?page={{ packets.next_page_number }}">
+                                  <i class="right arrow icon"></i>
+                              </a>
+                              {% endif %}
+                          </div>
+                      </div>
+                    </div>
+                </div>
+            </div>        
+        </div>
+        <style type="text/css">
+        table tbody td
+        {
+          word-break: break-all;
+          word-wrap: break-word;
+        }
+        </style>     
+        
+    </div>
+
+<script>
+$('#start_capture').click(function ()
+{   $.get("?control=1");
+    });
+
+$('#stop_capture').click(function ()
+{   $.get("?control=0");
+    });
+
+$('#flush_page').click(
+  function()
+{
+  window.location.reload();
+
+    });
+</script>
+
+
+<script>
+/**
+ * Grid theme for Highcharts JS
+ * @author Torstein Honsi
+ */
+
+/*
+Highcharts.theme = {
+  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
+  chart: {
+    backgroundColor: {
+      linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+      stops: [
+        [0, 'rgb(255, 255, 255)'],
+        [1, 'rgb(240, 240, 255)']
+      ]
+    },
+    borderWidth: 2,
+    plotBackgroundColor: 'rgba(255, 255, 255, .9)',
+    plotShadow: true,
+    plotBorderWidth: 1
+  },
+  title: {
+    style: {
+      color: '#000',
+      font: 'bold 16px "Trebuchet MS", Verdana, sans-serif'
+    }
+  },
+  subtitle: {
+    style: {
+      color: '#666666',
+      font: 'bold 12px "Trebuchet MS", Verdana, sans-serif'
+    }
+  },
+  xAxis: {
+    gridLineWidth: 1,
+    lineColor: '#000',
+    tickColor: '#000',
+    labels: {
+      style: {
+        color: '#000',
+        font: '11px Trebuchet MS, Verdana, sans-serif'
+      }
+    },
+    title: {
+      style: {
+        color: '#333',
+        fontWeight: 'bold',
+        fontSize: '12px',
+        fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+
+      }
+    }
+  },
+  yAxis: {
+    minorTickInterval: 'auto',
+    lineColor: '#000',
+    lineWidth: 1,
+    tickWidth: 1,
+    tickColor: '#000',
+    labels: {
+      style: {
+        color: '#000',
+        font: '11px Trebuchet MS, Verdana, sans-serif'
+      }
+    },
+    title: {
+      style: {
+        color: '#333',
+        fontWeight: 'bold',
+        fontSize: '12px',
+        fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+      }
+    }
+  },
+  legend: {
+    itemStyle: {
+      font: '9pt Trebuchet MS, Verdana, sans-serif',
+      color: 'black'
+
+    },
+    itemHoverStyle: {
+      color: '#039'
+    },
+    itemHiddenStyle: {
+      color: 'gray'
+    }
+  },
+  labels: {
+    style: {
+      color: '#99b'
+    }
+  },
+
+  navigation: {
+    buttonOptions: {
+      theme: {
+        stroke: '#CCCCCC'
+      }
+    }
+  }
+};
+*/
+// Apply the theme
+//var highchartsOptions = Highcharts.setOptions(Highcharts.theme);
+
+</script>
+
+<script>
+
+$(function () {
+    $('#column_chart').highcharts({
+
+        chart: {
+            type: 'column',
+            options3d: {
+                enabled: true,
+                alpha: 15,
+                beta: 15,
+                viewDistance: 25,
+                depth: 40
+            },
+            marginTop: 80,
+            marginRight: 40
+        },
+
+        title: {
+            text: 'Counts of main protocol packets in column chart'
+        },
+        credits:{
+            enabled:false
+            },
+        legend: {
+            enabled: true
+        },
+
+        xAxis: {
+            //type: 'category'
+            categories: ['TCP', 'UDP', 'DNS', 'HTTP', 'IGMP']
+            //labels: {enabled: false},
+        },
+
+        yAxis: {
+            allowDecimals: false,
+            min: 0,
+            title: {
+                text: 'Number of packets'
+            }
+        },
+        plotOptions: {
+            column: {
+                stacking: 'normal',
+                depth: 40
+            }
+        },
+
+          series:{{ series_column|safe }}
+          /*series: [{
+                name: 'counts',
+                colorByPoint: true,
+                data: {{ series_column|safe }}
+            }]*/
+
+            /*series: [{
+            name: 'Tokyo',
+            data: [49.9,]
+
+        }, {
+            name: 'New York',
+            data: [0,83.6]
+
+        }, {
+            name: 'London',
+            data: [48.9, 38.8, 39.3, 41.4, 47.0, 48.3, 59.0, 59.6, 52.4, 65.2, 59.3, 51.2]
+
+        }, {
+            name: 'Berlin',
+            data: [42.4, 33.2, 34.5, 39.7, 52.6, 75.5, 57.4, 60.4, 47.6, 39.1, 46.8, 51.1]
+
+        }]*/        
+    });
+});
+</script>
+
+<script>
+$(function () {
+    $('#pie_chart').highcharts({
+        chart: {
+            type: 'pie',
+            options3d: {
+                enabled: true,
+                alpha: 45,
+                beta: 0
+            }
+        },
+        title: {
+            text: 'Counts of main protocol packets in pie chart'
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        credits:{
+            enabled:false
+            },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                depth: 35,
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.name}'
+                }
+            }
+        },
+        series: [{
+            type: 'pie',
+            name: 'counts',
+            /*data: [
+                ['Firefox',   45.0],
+                ['IE',       26.8],
+                {
+                    name: 'Chrome',
+                    y: 12.8,
+                    sliced: true,
+                    selected: true
+                },
+                ['Chrome',12.8],
+                ['Safari',    8.5],
+                ['Opera',     6.2],
+                ['Others',   0.7]
+            ]*/
+            data:{{ series_pie|safe }}
+        }]
+    });
+});
+
+</script>
+
+</body>
+</html>
