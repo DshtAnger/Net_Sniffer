@@ -1,4 +1,6 @@
 # Net_Sniffer
 a sniffer with web ui and data visualization
 
-    123
+    sudo service mongo start
+    cd Django_sample
+    sudo python manag.py runserver
